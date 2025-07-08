@@ -2,39 +2,325 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <script src="https://cdn.tailwindcss.com"></script>
   <title>参加者一覧</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&display=swap');
+    
+    body {
+      font-family: "Yu Gothic Medium", "游ゴシック Medium", YuGothic, "游ゴシック体", "Hiragino Sans", "ヒラギノ角ゴ ProN W3", "Hiragino Kaku Gothic ProN", "メイリオ", Meiryo, sans-serif;
+      background: #fafafa;
+      min-height: 100vh;
+      color: #333;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    
+    .serif {
+      font-family: 'Playfair Display', serif;
+    }
+    
+    .card {
+      background: white;
+      border: 1px solid #e8e8e8;
+      box-shadow: 0 1px 10px rgba(0, 0, 0, 0.04);
+      transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #d4af37, transparent);
+      transition: left 0.6s ease;
+    }
+    
+    .card:active::before {
+      left: 100%;
+    }
+    
+    .card:active {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      border-color: rgba(212, 175, 55, 0.3);
+    }
+    
+    .expand-button {
+      position: relative;
+      transition: all 0.3s ease;
+      padding-right: 2.5rem;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+    
+    .expand-button:active {
+      color: #d4af37;
+    }
+    
+    .expand-button::after {
+      content: '＋';
+      position: absolute;
+      right: 0.8rem;
+      top: 50%;
+      transform: translateY(-50%);
+      transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+      font-size: 1rem;
+      font-weight: 300;
+      color: #d4af37;
+    }
+    
+    .expand-button.expanded::after {
+      content: '－';
+      transform: translateY(-50%) rotate(180deg);
+    }
+    
+    .detail-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+    }
+    
+    .detail-content.show {
+      max-height: 800px;
+    }
+    
+    .detail-section {
+      opacity: 0;
+      transform: translateX(-10px);
+      transition: all 0.3s ease;
+    }
+    
+    .detail-section.show {
+      opacity: 1;
+      transform: translateX(0);
+    }
+    
+    .accent-line {
+      width: 2px;
+      height: 100%;
+      background: linear-gradient(180deg, #d4af37, #b8860b);
+      border-radius: 1px;
+      min-height: 40px;
+    }
+    
+    .header-ornament {
+      position: relative;
+      padding: 1.5rem 0;
+    }
+    
+    .header-ornament::before,
+    .header-ornament::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      width: 30px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, #d4af37, transparent);
+    }
+    
+    .header-ornament::before {
+      left: -40px;
+    }
+    
+    .header-ornament::after {
+      right: -40px;
+    }
+    
+    .loading {
+      animation: fadeInOut 2s infinite;
+    }
+    
+    @keyframes fadeInOut {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 1; }
+    }
+    
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.3), transparent);
+      margin: 0.5rem 0;
+    }
+    
+    .kana-text {
+      color: #666;
+      font-weight: 300;
+    }
+    
+    .label-text {
+      color: #d4af37;
+      font-weight: 500;
+      font-size: 0.8rem;
+      letter-spacing: 0.3px;
+      margin-bottom: 0.3rem;
+    }
+    
+    .content-text {
+      color: #444;
+      line-height: 1.5;
+      font-weight: 300;
+      font-size: 0.9rem;
+    }
+    
+    /* スマホ最適化 */
+    @media (max-width: 640px) {
+      .card {
+        margin: 0 -0.5rem;
+        border-radius: 0.5rem;
+      }
+      
+      .expand-button {
+        font-size: 1rem;
+        padding: 0.8rem;
+      }
+      
+      .detail-section {
+        margin-bottom: 1rem;
+      }
+      
+      .accent-line {
+        min-height: 35px;
+      }
+      
+      .header-ornament::before,
+      .header-ornament::after {
+        display: none;
+      }
+    }
+  </style>
 </head>
-<body class="bg-white text-gray-800 p-4">
-  <div id="app" class="space-y-4"></div>
+<body class="px-3 py-4">
+  <div class="max-w-md mx-auto">
+    <!-- Header -->
+    <div class="text-center mb-6">
+      <div class="header-ornament">
+        <h1 class="serif text-2xl font-semibold text-gray-800 mb-1">参加者一覧</h1>
+        <p class="text-gray-500 text-xs font-light tracking-wide">— タップして詳細を表示 —</p>
+      </div>
+    </div>
+    
+    <!-- Loading State -->
+    <div id="loading" class="text-center py-8">
+      <div class="loading text-gray-500 text-sm font-light">データを読み込み中...</div>
+    </div>
+    
+    <!-- Main Content -->
+    <div id="app" class="space-y-3"></div>
+  </div>
 
 <script>
     fetch('https://script.google.com/macros/s/AKfycbzW46JFoaX6aQlxLpo8XC3S7m9OM7ul2mheoWriT0c_0RctFG94gHKwe_JZkbK_FrXVBg/exec')
     .then(res => res.json())
     .then(data => {
       const app = document.getElementById("app");
+      const loading = document.getElementById("loading");
+      
+      // Hide loading
+      loading.style.display = 'none';
+      
       data.forEach((person, index) => {
         const section = document.createElement("div");
+        section.className = "card rounded-lg p-4";
+        
         section.innerHTML = `
-          <button class="w-full text-left font-semibold text-lg border-b pb-2" onclick="document.getElementById('detail${index}').classList.toggle('hidden')">
-            ${person.full_name}（${person.full_kana}）
+          <button class="expand-button w-full text-left font-medium text-base pb-1 transition-colors" 
+                  onclick="toggleDetail(${index})">
+            <span class="serif">${person.last_name} ${person.first_name}</span>
+            <span class="kana-text ml-2 text-sm">（${person.last_name_kana} ${person.first_name_kana}）</span>
           </button>
-          <div id="detail${index}" class="hidden text-sm pl-4 pt-2 space-y-1">
-            <p><strong>所属:</strong> ${person.affiliation}</p>
-            <p><strong>今のお仕事や活動:</strong> ${person.job}</p>
-            <p><strong>最近「ちょっと面白い」と思ったこと:</strong> ${person.interesting}</p>
-            <p><strong>最近、誰かと話したくなったテーマ:</strong> ${person.theme}</p>
-            <p><strong>小松がきっかけだったと思い出す出来事:</strong> ${person.memory}</p>
-            <p><strong>小松市に対するイメージ:</strong> ${person.image}</p>
+          
+          <div class="divider"></div>
+          
+          <div id="detail${index}" class="detail-content">
+            <div class="pt-3 space-y-3">
+              <div class="detail-section flex">
+                <div class="accent-line mr-2"></div>
+                <div class="flex-1">
+                  <div class="label-text">所属</div>
+                  <div class="content-text">${person.affiliation}</div>
+                </div>
+              </div>
+              
+              <div class="detail-section flex">
+                <div class="accent-line mr-2"></div>
+                <div class="flex-1">
+                  <div class="label-text">今のお仕事や活動</div>
+                  <div class="content-text">${person.current_work_summary}</div>
+                </div>
+              </div>
+              
+              <div class="detail-section flex">
+                <div class="accent-line mr-2"></div>
+                <div class="flex-1">
+                  <div class="label-text">最近「ちょっと面白い」と思ったこと</div>
+                  <div class="content-text">${person.recent_interest}</div>
+                </div>
+              </div>
+              
+              <div class="detail-section flex">
+                <div class="accent-line mr-2"></div>
+                <div class="flex-1">
+                  <div class="label-text">最近、誰かと話したくなったテーマ</div>
+                  <div class="content-text">${person.recent_topic}</div>
+                </div>
+              </div>
+              
+              <div class="detail-section flex">
+                <div class="accent-line mr-2"></div>
+                <div class="flex-1">
+                  <div class="label-text">小松がきっかけだったと思い出す出来事</div>
+                  <div class="content-text">${person.komatsu_memory}</div>
+                </div>
+              </div>
+              
+              <div class="detail-section flex">
+                <div class="accent-line mr-2"></div>
+                <div class="flex-1">
+                  <div class="label-text">小松市に対するイメージ</div>
+                  <div class="content-text">${person.komatsu_impression}</div>
+                </div>
+              </div>
+            </div>
           </div>
         `;
+        
         app.appendChild(section);
       });
+    })
+    .catch(error => {
+      const loading = document.getElementById("loading");
+      loading.innerHTML = '<div class="text-red-400">データの読み込みに失敗しました</div>';
     });
+    
+    function toggleDetail(index) {
+      const detail = document.getElementById(`detail${index}`);
+      const button = detail.previousElementSibling.previousElementSibling;
+      const detailSections = detail.querySelectorAll('.detail-section');
+      
+      if (detail.classList.contains('show')) {
+        // Hide
+        detail.classList.remove('show');
+        button.classList.remove('expanded');
+        detailSections.forEach(section => section.classList.remove('show'));
+      } else {
+        // Show
+        detail.classList.add('show');
+        button.classList.add('expanded');
+        
+        // Animate sections with staggered delay
+        detailSections.forEach((section, i) => {
+          setTimeout(() => {
+            section.classList.add('show');
+          }, i * 80);
+        });
+      }
+    }
 </script>
-
 
 </body>
 </html>
-
