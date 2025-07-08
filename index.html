@@ -1,1 +1,40 @@
-あ
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <title>参加者一覧</title>
+</head>
+<body class="bg-white text-gray-800 p-4">
+  <div id="app" class="space-y-4"></div>
+
+<script>
+    fetch('https://script.google.com/macros/s/AKfycbzW46JFoaX6aQlxLpo8XC3S7m9OM7ul2mheoWriT0c_0RctFG94gHKwe_JZkbK_FrXVBg/exec')
+    .then(res => res.json())
+    .then(data => {
+      const app = document.getElementById("app");
+      data.forEach((person, index) => {
+        const section = document.createElement("div");
+        section.innerHTML = `
+          <button class="w-full text-left font-semibold text-lg border-b pb-2" onclick="document.getElementById('detail${index}').classList.toggle('hidden')">
+            ${person.full_name}（${person.full_kana}）
+          </button>
+          <div id="detail${index}" class="hidden text-sm pl-4 pt-2 space-y-1">
+            <p><strong>所属:</strong> ${person.affiliation}</p>
+            <p><strong>今のお仕事や活動:</strong> ${person.job}</p>
+            <p><strong>最近「ちょっと面白い」と思ったこと:</strong> ${person.interesting}</p>
+            <p><strong>最近、誰かと話したくなったテーマ:</strong> ${person.theme}</p>
+            <p><strong>小松がきっかけだったと思い出す出来事:</strong> ${person.memory}</p>
+            <p><strong>小松市に対するイメージ:</strong> ${person.image}</p>
+          </div>
+        `;
+        app.appendChild(section);
+      });
+    });
+</script>
+
+
+</body>
+</html>
+
